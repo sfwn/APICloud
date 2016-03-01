@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,initial-scale=1.0,width=device-width"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>root page</title>
+    <link rel="stylesheet" type="text/css" href="./css/api.css" />
+    <style type="text/css">
+    html, body{
+        height: 100%;
+    }
+    #wrap{
+        height: 100%;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-flex-flow: column;
+    }
+    #header{
+        text-align: center; 
+		background-color: rgba(7, 103, 200, 0.7); 
+		color: #fff;
+        width: 100%;
+    }
+    #header h1{
+        font-size: 20px; 
+		height: 44px; 
+		line-height: 44px; 
+		margin: 0em; 
+		color: #fff;
+    }
+    #main{
+        -webkit-box-flex: 1; 
+        -webkit-flex: 1;
+        background-color: #fff;
+        background-image: url("image/git2.jpg");
+        background-size: 100% 45%;
+    }
+    #footer{
+        height: 30px; 
+		line-height: 30px;
+        background-color: #81a9c3; 
+        width: 100%;
+        text-align: center;
+    }
+    #footer h5{
+        color: white;
+    }
+    .con{
+		font-size: 28px; 
+		text-align: center;
+	}
+    </style>
+</head>
+<body>
+    <div id="wrap">
+        <div id="header">
+            <h1>GIT</h1>
+        </div>
+        <div id="main">
+        </div>
+        <!-- <div id="footer">
+            <h5>Copyright &copy;<span id="year"></span> </h5>
+        </div> -->
+    </div>
+</body>
+<script type="text/javascript" src="./script/api.js"></script>
+<script type="text/javascript">
+
+    apiready = function(){
+        //状态栏沉浸
+        $api.fixStatusBar($api.byId('header'));
+
+        //打开app，检查storage，判断用户是否已经登录
+        //如果没有，则跳转到登录win
+        
+        // 测试用，发布时请删除
+        // $api.setStorage('username', 'linjun');  
+        // $api.rmStorage('username');
+
+        var username = $api.getStorage('username');
+        if (username !== undefined && username !== '') {  //username存在并且不为空
+            //do nothing
+            var headerH = $api.offset($api.byId('header')).h;
+            var footerH = 0;  //30
+            var frameH = api.winHeight - headerH - footerH;
+
+            api.openFrame({
+                name: 'frm_user',
+                url: 'html/frm_user.html',
+                bounces: true,
+                rect: {
+                    x: 0,
+                    y: headerH,
+                    w: 'auto',
+                    h: frameH
+                },
+                pageParam: {  //JSON对象
+                    headerH: headerH
+                }
+            });
+        } else { //如果尚未登录，则跳转到登录win
+            api.openWin({
+                name: 'win_login',
+                url: 'html/win_login.html',
+                bounces: false,
+                animation: {
+                    type: 'push',
+                    subType: 'from_left',
+                    duration: 1000
+                },
+                pageParam: {
+                    headerH : headerH,
+                    frameH : frameH
+                }
+            });
+        }
+    }
+</script>
+</html>

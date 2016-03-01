@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/common.css"/>
+    <style>
+        .address {
+            background-image: url("../image/icon_location@2x.png");
+        }
+        #address {
+            color: #FFF;
+        }
+        i {
+            display: block;
+            width: 30px;
+            height: 30px;
+            background-size: 30px;
+            background-repeat: no-repeat no-repeat;
+            background-position: center;
+        }
+        .input-wrap {
+            /*padding: 10px 0;*/
+            display: -webkit-box;
+            background-color: #CEE4F0; 
+        }
+        .input-wrap input {
+            display: block;
+            -webkit-box-flex: 1;
+            /*background-color: rgba(7, 103, 200, 0.7);*/
+            outline: none;
+            height: 30px;
+        }
+        /*上面是新增的*/
+
+
+        .unlogin {
+            border-bottom: 1px solid #9D8C7B;
+        }
+
+        .unlogin img {
+            width: 100%;
+            -webkit-filter: blur(8px);
+            opacity: .7;
+        }
+
+        .user-img {
+            position: absolute;
+            top: 20px;
+            width: 75px;
+            height: 75px;
+            left: 0;
+            right: 0;
+            margin: auto;
+            border: 5px solid #9F9887;
+            border-radius: 100%;
+        }
+
+        .user-img img {
+            width: 100%;
+            height: 100%;
+        }
+
+        .login {
+            width: 90px;
+            padding: 10px 10px;
+            position: absolute;
+            top: 110px;
+            left: 0;
+            right: 0;
+            margin: 20px auto;
+            background-color: #3BBB65;
+            color: #FFFFFF;
+        }
+
+        .category {
+            margin-top: 5px;
+            border-bottom: 1px solid #bebebe;
+        }
+
+        .category li {
+            display: inline-block;
+            width: 32.5%;/*24%;*/
+            text-align: center;
+            padding: 20px 0 10px;
+            background-size: 30px;
+            background-repeat: no-repeat;
+            background-position: top;
+        }
+
+        .category li span {
+            margin: 15px 10px 0 10px;
+        }
+
+        .order {
+            background-image: url("../image/user_menu_order@2x.png");
+        }
+
+        .chat {
+            background-image: url("../image/user_menu_chat@2x.png");
+        }
+
+        .snap_up {
+            background-image: url("../image/user_menu_snap_up@2x.png");
+        }
+
+        .coupon {
+            background-image: url("../image/user_menu_coupon@2x.png");
+        }
+
+        .user-setting li:not(:last-child) {
+            position: relative;
+            padding: 3px 10px;
+            background-size: 20px;
+            background-repeat: no-repeat;
+            background-position: 95%;
+            background-image: url("../image/arrow_grey_right_normal.png");
+        }
+
+        .user-setting li:last-child {
+            position: relative;
+            padding: 3px 10px;
+        }
+
+        .user-setting li:last-child span {
+            padding: 10px 0 10px 50px;
+        }
+
+        .user-setting li:last-child div {
+            position: absolute;
+            right: 5%;
+            top: 13px;
+            color: #e6e6e6;
+            font-size: 10px;
+        }
+
+        .user-setting li span {
+            display: block;
+            padding: 10px 50px;
+            background-size: 20px;
+            background-repeat: no-repeat;
+            background-position: 5%;
+
+        }
+    </style>
+</head>
+<body>
+<div id='unlogin1' class="unlogin" tapmode="" onclick="">
+    <img src="../image/t1.jpg" onclick=''/>
+    <button class="login" onclick='logout()'>退出登录</button>
+</div>
+<div class="user-img">
+    <img src="../image/guarantee-2.png" onclick='cusInfo()' />
+</div>
+<div class="content">
+    <ul id='category1' class="category">
+        <li class="order" tapmode="" onclick="uploadBegin()"><span>
+            上传
+        </span></li>
+        <li class="order" tapmode="" onclick="download()"><span>
+            文件下载
+        </span></li>
+        <li class="coupon" tapmode="" onclick="gps()"><span>
+            GPS定位
+        </span></li>
+    </ul>
+</div>
+<div class="input-wrap">
+    <i class="address"></i>
+    <input type="text" placeholder="当前地址" class="txt" id="address" value=""/>
+</div>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script>
+    apiready = function(){
+        startGps();     
+    }
+
+
+    //总的上传方法，包含1.上传图片  2.上传视频   3.上传其他文件
+    function uploadBegin() {
+        api.confirm({
+            title: '文件类型',
+            msg: '请选择要上传的文件类型',
+            buttons:['图片视频', '取消', '其他文件']
+        },function(ret,err){
+            if(ret.buttonIndex == 1){  //上传图片视频
+                api.confirm({
+                    title: '提示',
+                    msg: '图片 or 视频',
+                    buttons:['图片', '取消', '视频']
+                },function(ret,err){
+                    if(ret.buttonIndex == 1){
+                        uploadPic();
+                    } else if(ret.buttonIndex == 3){
+                        uploadVideo();
+                    } else {
+                        //用户点击'取消'
+                        //do nothing
+                    }
+                });
+            } else if (ret.buttonIndex == 3) {
+                //上传其他文件
+                var fb = api.require('fileBrowser');
+                fb.open(function(ret, err) {
+                    //选择完毕后关闭fileBroswer
+                    fb.close();
+                    if (ret.url != null) {
+                        api.alert({
+                            title: '上传成功', 
+                            msg: '文件路径为：' + ret.url
+                        });
+                        upload(ret.url);
+                    } else {
+                        // 下面的逻辑为什么这么写，请参见该页下面的getPic()方法
+                        if (ret) {
+                            //do nothing
+                        } else {
+                            api.alert({
+                                title: '上传失败', 
+                                msg: '获得文件路径失败！'
+                            });
+                        }
+                        
+                    }
+                });
+
+            }
+        });
+    }
+
+
+    //mediaType: 图片pic，视频vedio
+    //上传图片，选择是从图库上传还是相机拍摄
+    function uploadPic() {
+        api.confirm({
+            title: '从哪里上传？',
+            msg: '请选择获得图片的方式',
+            buttons: ['图库', '取消', '相机']
+        },function(ret, err) {
+            if (ret.buttonIndex == 3) { //拍照
+                getPic('camera', 'pic');
+            } else if(ret.buttonIndex == 1) { //图库
+                getPic('library', 'pic');
+            } else { //不上传图片
+                //do nothing
+            }
+        });
+    }
+
+
+    //上传视频
+    function uploadVideo() {
+        getPic(null, 'video');  //注意video需要''包围
+    }
+
+
+    //可以复用的方法，传入两个参数
+    //@sourceType: 图片从哪里选
+    //@mediaType: 媒体类型
+    function getPic(sourceType, mediaType) {
+        api.getPicture({
+            sourceType: sourceType,
+            mediaValue: mediaType,
+            destinationType: 'url',
+            allowEdit: true,
+            quality: 100,
+            saveToPhotoAlbum: true
+        }, function(ret, err){ 
+            //如果用户已经进入图片库但是又点击×号选择取消上传，则会返回一个空地址
+            //只要模块没问题，ret肯定会有，只不过ret.data == null
+            if (ret.data != '') {
+                alert("图片路径为：" + ret.data);
+                upload(ret.data);
+            } else {
+                // 进入else，说明ret.data为空
+                // 如果有ret，没问题，正常退出
+                // 如果没有ret而进入此else循环，则弹出错误信息
+                if (ret) {
+                    // do nothing
+                } else {
+                    api.alert({
+                        title: '意外信息', 
+                        msg: err.msg
+                    });
+                }
+            }
+        });
+    }
+    
+
+    //上传所需要的统一方法
+    function upload(path) {
+        var fs = api.require('fs');
+        showProgress();
+        api.ajax({
+            url : 'http://10.100.16.24:8080/CXFClient/uploadFileServlet',
+            method : 'post',
+            timeout : 30,
+            dataType : 'json',
+            report : false,
+            returnAll : false,
+            data : {
+                values : {'username' : 'shiwei'},
+                files : { 'file' : path }
+            }
+        }, function(ret, err) {
+            //coding...
+            var arcProgress = api.require('arcProgress');
+            arcProgress.close({id:3});
+            arcProgress.close({id:1});
+            arcProgress.close({id:2});
+            if (ret) {
+                // alert(ret.progress);
+                // api.toast({
+                //         msg: '正在玩命上传中!!!',
+                //         duration: 1000,
+                //         location: 'middle'
+                // });
+                var urlJson = JSON.stringify(ret);
+                api.alert({
+                    msg : urlJson
+                });
+            } else {
+                api.alert({
+                    msg : ('错误码：' + err.code + '；错误信息：' + err.msg + 'msg网络状态码：' + err.statusCode)
+                });
+            }
+        });
+    }
+
+    // 进度条显示  arcProgress
+    function showProgress() {
+        /*示例简介:
+        打开三个不同风格圆形进度条;
+        进度条的背景色和进度色均为随机颜色;
+        动态自动设置进度;
+        */
+        
+        /* 加载 圆形进度条 模块. */
+        
+        var arcProgress = api.require('arcProgress');
+        
+        /* 打开模块,并动态设置 圆形进度条 进度*/
+        
+        /* 寻找一个适合的半径*/
+        var radius = api.frameWidth / 6.0;
+        
+        for(var i =0; i < 1; i++){
+            arcProgress.open({
+                type: i,
+                centerX: radius * (2 * i  + 1),
+                centerY: api.frameHeight / 2.0,
+                radius: radius,
+                bgColor: randomColor(),
+                pgColor: randomColor()
+            },function(ret,err){
+                /* 进度自动步进. */
+                ! function(id, value){
+                    setInterval(function(){
+                        if(value > 100){
+                            value %= 100;
+                        }
+                        arcProgress.setValue({
+                            id: id,
+                            value: value ++
+                        });
+                    }, 100);
+                }(ret.id, 0);
+            });
+        }   
+    
+        // -----------------------------------
+    
+        /* 产生一个随机 rgba 颜色值. */
+        function randomColor(){
+            var alpha = random(10) / 10;
+    
+            if(alpha < 0.5){
+                alpha = 0.5;
+            }
+    
+            var rgba = "rgba(" + random(255) + ", " + random(255) +
+                ", " + random(255) + ", " + alpha + ")";
+    
+            return rgba;
+        
+           // ---------------------------
+           /* 产生 0 ~ max 的随机整数 */
+           function random(max){
+               return  Math.floor(Math.random() * (max + 1));
+           }
+        }   
+    }
+
+
+    //文件下载
+    function download() {
+        var fs = api.require('fs');
+        //打开一个新的页面，显示用户已经上传的文档
+        //$api.getStorage
+        // api.openWin({
+        //     name: 'winname',
+        //     url: 'winurl',
+        //     bounces: false,
+        //     pageParam: {key : 'value'}
+        // });
+        api.ajax({
+            url: 'http://10.100.16.24:8080/CXFClient/downloadFileServlet',
+            method: 'post',
+            timeout: 30,
+            dataType: 'json',
+            returnAll: false,
+            data: {
+                values : {
+                    username: 'shiwei',
+                    filename: '1.jpg'
+                }
+            }
+        },function(ret, err) {
+            if (ret) {
+                // TODO 
+                alert(ret.path);
+                api.download({
+                    url: ret.path,
+                    report: true,
+                    cache: true,
+                    allowResume: true,
+                    savePath: 'fs://sw'
+                },function(ret,err){
+                    if (ret) {
+                        var value = ('文件大小：'+ret.fileSize+'；下载进度：'+ret.percent+'；下载状态'+ret.state+'存储路径: '+ret.savePath);
+                        alert(value);
+                    } else{
+                        var value = err.msg;
+                    }
+                });
+            } else {
+                api.alert({
+                    msg:('错误码：'+err.code+'；错误信息：'+err.msg+'网络状态码：'+err.statusCode)
+                });
+            };
+        });
+
+
+        /*api.download({
+            url: 'http://10.100.16.24:8080/CXFClient/downloadFileServlet',
+            report: true,
+            cache: true,
+            allowResume: true
+        },function(ret,err){
+            if (ret) {
+                var value = ('文件大小：'+ret.fileSize+'；下载进度：'+ret.percent+'；下载状态'+ret.state+'存储路径: '+ret.savePath);
+                alert(value);
+            } else{
+                var value = err.msg;
+            }
+        });*/
+    }
+
+
+    //跳转到登录页面，调试的时候用到
+    function login() {
+        api.openWin({
+            name: 'win_login',
+            url: 'win_login.html',
+        });
+    }
+
+
+    //GPS的启动和关闭
+    var started = false;
+    function gps() {
+        
+        if (started == false) {
+            // alert('地图打开成功');
+            startGps();
+            //布尔值的设置在startGps()中，保证地图确实成功启动之后才修改布尔值
+        } else {
+            // alert('地图关闭成功');
+            var bmap = api.require('bMap');
+            bmap.close();
+            document.getElementById('address').placeholder = '';
+            started = false;
+        }
+    }
+
+
+    //GPS定位，使用bMap模块能够定位并获得当前地址即可
+    var _lon = 116.482893;  //高伟达总部经度
+    var _lat = 39.959246;  //高伟达总部纬度
+    function startGps() {
+        //获得地址
+        getAddress();
+        //alert('startGps: \n' + 'lon: ' + _lon + ' \nlat: ' + _lat);
+        //console.log('startGps: \n' + 'lon: ' + _lon + ' \nlat: ' + _lat);
+
+        var pageParam = api.pageParam;
+        var headerH = pageParam.headerH;
+        //根据类unlogin来获得高度
+        var unlogin1H = document.getElementById('unlogin1').offsetHeight;
+        var category1H = document.getElementById('category1').offsetHeight;
+
+        // alert('headerH: ' + headerH + '\n' + 
+        //         'frameH: ' + frameH);
+    
+        var bmap = api.require('bMap');
+        bmap.open({
+            rect: {
+                x: 0,
+                //y的起始位置为：frame总高度 - 背景图片的高度(id = unlogin1) - li的高度(id = category1)
+                y: headerH + unlogin1H + category1H + 5.5 + 30,
+                //y: unlogin1H + category1H + 5.5/*修正量*/ + 30/*用于显示地址的框*/,
+                w: 'auto',
+                h: api.winHeight - headerH - unlogin1H - category1H - 5.5 - 30//300 //winHeight比frameHeight多很多
+            },
+            center: {  //高斓大厦  116.482893,39.959246
+                // lon: 116.482893,  //经度
+                // lat: 39.959246  //纬度
+                lon: _lon,
+                lat: _lat
+            },
+            zoomLevel: 17,//3~18
+            showUserLocation: true,
+            fixedOn: '',//winName/frameName  //frm_user
+            fixed: true  //map是否随所属 Window 或 Frame 滚动，false为滚动
+        }, function(ret){
+            if(ret.status == true){
+                //alert('地图打开成功');
+                started = true;
+                currentLocation();
+            } else {
+                alert('地图打开失败！尝试重新打开！');
+                gps();
+            }
+        });
+    }
+
+    function currentLocation() {
+        var bmap = api.require('bMap');
+        bmap.showUserLocation({
+            isShow: true,
+            trackingMode: 'compass'//none/follow/compass
+        });
+    }
+
+
+    //根据经纬度获得地址详细信息
+    //显示在id = address 的文本框中
+    function getAddress() {
+        var bmap = api.require('bMap');
+        bmap.getLocation({
+            accuracy: '10m',//10m/100m/1km/3km
+            autoStop: true,
+            filter: 1
+        }, function(ret, err){
+            if(ret.status == true){
+                //得到经度和纬度
+                _lon = ret.lon;
+                _lat = ret.lat;
+                //根据经纬度得到地址
+                bmap.getNameFromCoords({
+                    lon: _lon,
+                    lat: _lat
+                },function(ret, err) {
+                    if(ret.status) {
+                        document.getElementById('address').placeholder = ret.address;
+                    }
+                });
+            }else{
+                alert(err.code);
+            }
+        });
+    }
+
+
+    //退出登录
+    function logout() {
+        //退出登录时，将username从localStorage中remove
+        $api.rmStorage('username');
+        //刚退出的用户的username在recentUsername中保存着
+        var recentUsername = $api.getStorage('recentUsername');
+        api.openWin({
+            name: 'win_login',
+            url: 'win_login.html',
+            bounces: false,
+            animation: {
+                    type: 'push',
+                    subType: 'from_top',
+                    duration: 500
+            },
+            reload: true
+        });
+    }
+
+
+    //客户资料补全
+    function cusInfo() {
+        //打开新的页面补全客户资料，资料补全后关闭
+        api.openWin({
+            name: 'cusInfo',
+            url: 'cusInfo.html',
+            bounces: false,
+            animation: {
+                    type: 'push',
+                    subType: 'from_left',
+                    duration: 1000
+            },
+            reload: true
+        });
+    }
+</script>
+</html>

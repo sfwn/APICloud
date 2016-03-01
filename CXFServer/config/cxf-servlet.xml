@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans 
+	xmlns:jaxws="http://cxf.apache.org/jaxws"
+    xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="    
+		http://cxf.apache.org/jaxws
+		http://cxf.apache.org/schemas/jaxws.xsd
+	 	http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+       http://www.springframework.org/schema/tx 
+       http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+       http://www.springframework.org/schema/aop 
+       http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+							">
+	<import resource="classpath:META-INF/cxf/cxf.xml" />
+	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">  
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+        <property name="url" value="jdbc:mysql://localhost:3306/apicloud"></property>  
+        <property name="username" value="root" />   
+        <property name="password" value="" />   
+        <!-- 数据库连接池保持的最小连接数 -->  
+        <property name="minIdle" value="5" />  
+        <!-- 数据库连接池保持的最大连接数 -->   
+        <property name="maxIdle" value="30" />  
+        <!--  
+              当数据库连接因为某种原因断掉之后，再重新从连接池中拿另外一个连接时实际上这个连接可能  
+            已经无效，所以为了确保所拿到的连接全都有效需要在获取连接，返回连接以及连接空闲时进行  
+            有效性验证 下面3个设置为true时进行验证，默认为false  
+         -->  
+        <!-- 取得连接时是否进行有效性验证 -->  
+        <property name="testOnBorrow" value="true" />  
+        <!-- 返回连接时是否进行有效性验证 -->  
+        <property name="testOnReturn" value="true" />  
+        <!-- 连接空闲时是否进行有效性验证 -->  
+        <property name="testWhileIdle" value="true" />            
+    </bean>
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" /><!-- 引用数据源 -->
+        <property name="mappingDirectoryLocations">
+            <list>
+                <value>classpath*:/com/git/entity/</value><!-- 加载hibernate的映射文件*.hbm.xml -->
+            </list>
+        </property>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQLInnoDBDialect</prop>
+                <prop key="hibernate.show_sql">true</prop>
+                <prop key="hibernate.format_sql">true</prop>
+                <prop key="hibernate.hbm2ddl.auto">create-drop</prop>
+                <!--<prop key="hibernate.current_session_context_class">thread</prop>-->
+            </props>
+        </property>
+    </bean>
+	   <!--实例化entity  -->
+	<bean id="fileSources" class="com.git.entity.FileSources" />
+	<bean id="user" class="com.git.entity.User" />
+	
+	<!--实例化dao  -->
+	<bean id="userDao" class="com.git.dao.impl.UserDao"/>
+	
+	<!--实例化service  -->
+	<bean id="userService" class="com.git.service.impl.UserService">
+		<property name="userDao" ref="userDao"/>
+	</bean>
+	<bean id="WebServiceServer" class="com.git.service.impl.ServiceImpl">
+		<property name="userService" ref="userService"></property>
+	</bean>
+	
+	
+	
+	<!--实例化action  -->
+	<bean id="fileAction" class="com.git.action.FileAction"></bean> 
+	
+	
+  <bean id="txtManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+     <property name="sessionFactory" ref="sessionFactory"/><!--  需要SessionFactory获取Session所以要注入 -->
+  </bean>
+  
+  <bean id="databasesTest" class="test.DatabasesTest">
+  	<!-- 把sessionFactory 注入给databasesTest -->
+	        <property name="sessionFactory" ref="sessionFactory" />
+  </bean>
+
+	<!-- 加载提供的服务 -->
+	<jaxws:endpoint id="service" address="/service" 
+	implementor="#WebServiceServer">
+		<!-- 配置拦截器 -->
+		<jaxws:inInterceptors>
+			<bean class="org.apache.cxf.interceptor.LoggingInInterceptor" />
+		</jaxws:inInterceptors>
+		<jaxws:outInterceptors>
+			<bean class="org.apache.cxf.interceptor.LoggingOutInterceptor" />
+		</jaxws:outInterceptors>
+	</jaxws:endpoint>
+</beans>
